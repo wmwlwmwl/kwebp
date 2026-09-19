@@ -1,21 +1,51 @@
 # kwebp
-webp module support for kangle web server.
-## usage
-* download and install libwebp
-```
-git clone https://github.com/webmproject/libwebp
+
+`kwebp` 是 Kangle Web Server 的 WebP 图片转换扩展。
+
+## 编译要求
+
+- Linux 或 Windows
+- CMake 3.12 或更高版本（部分发行版中的命令名为 `cmake3`）
+- C99 编译器
+- Kangle 开发头文件
+- libwebp 及 JPEG、PNG、TIFF 开发库；启用 GIF 支持时还需 giflib 开发库
+
+构建参数：
+
+- `KANGLE_DIR`：Kangle **安装目录**，例如 `/vhs/kangle`。
+- `KANGLE_SOURCE_DIR`：可选的 Kangle **源代码目录**。若源码位于 `kwebp` 同级的 `kangle` 目录，可省略该参数。
+- `LIBWEBP_DIR`：指向 libwebp 源码目录，其 `build` 子目录中应已有编译产物。
+
+## 编译 libwebp
+
+```sh
+git clone https://github.com/webmproject/libwebp.git
 cd libwebp
-mkdir build && cd build
-cmake .. -D CMAKE_C_FLAGS=-fPIC
-make
-sudo make install
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+cmake --build build -j
+cmake --build build --target install
 ```
-* build kwebp use cmake
-```
-git clone https://github.com/keengo99/kwebp
+
+## 编译和安装 kwebp
+
+```sh
+git clone https://github.com/netcccyun/kwebp.git
 cd kwebp
-mkdir build && cd build
-cmake .. -D KANGLE_DIR=kangle_installed_dir -D LIBWEBP_DIR=libwebp_dir
-make
-make install
+
+cmake -S . -B build \
+  -DKANGLE_DIR=/vhs/kangle \
+  -DKANGLE_SOURCE_DIR=/path/to/kangle-source \
+  -DLIBWEBP_DIR=/path/to/libwebp \
+  -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
+cmake --build build --target install
 ```
+
+安装完成后应生成：
+
+- `/vhs/kangle/bin/kwebp.so`
+- `/vhs/kangle/ext/kwebp.dso.xml`
+
+最后重启或重载 Kangle，使扩展配置生效。
