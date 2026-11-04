@@ -28,6 +28,9 @@ cmake --build build -j
 cmake --build build --target install
 ```
 
+CentOS 7 下可在上述 libwebp 配置命令中添加 `-DWEBP_ENABLE_SIMD=OFF`。
+该选项关闭 libwebp 的 SIMD 优化，解决编译时出现 `_mm256_cvtsi256_si32` 未定义的链接错误。
+
 ## 编译和安装 kwebp
 
 ```sh
