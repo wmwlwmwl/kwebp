@@ -16,7 +16,13 @@
 - `KANGLE_SOURCE_DIR`：可选的 Kangle **源代码目录**。若源码位于 `kwebp` 同级的 `kangle` 目录，可省略该参数。
 - `LIBWEBP_DIR`：指向 libwebp 源码目录，其 `build` 子目录中应已有编译产物。
 
-## 编译 libwebp
+## Windows 编译
+
+先运行相邻 Kangle 项目的 `build-windows.ps1` 生成开发头文件。在 kwebp 工程目录运行 `.\build-windows.ps1`，默认生成 `build/Release/kwebp.dll`。
+
+脚本默认使用 Kangle 源码中 `deps/windows-x64` 的 libwebp 和 Kangle 的 `build/install`。可通过 `-BuildDirectory`、`-DependencyRoot` 或 `-KangleDirectory` 指定对应目录。
+
+## Linux 编译 libwebp
 
 ```sh
 git clone https://github.com/webmproject/libwebp.git
@@ -31,7 +37,7 @@ cmake --build build --target install
 CentOS 7 下可在上述 libwebp 配置命令中添加 `-DWEBP_ENABLE_SIMD=OFF`。
 该选项关闭 libwebp 的 SIMD 优化，解决编译时出现 `_mm256_cvtsi256_si32` 未定义的链接错误。
 
-## 编译和安装 kwebp
+## Linux 编译和安装 kwebp
 
 ```sh
 git clone https://github.com/netcccyun/kwebp.git
