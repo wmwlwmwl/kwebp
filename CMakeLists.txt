@@ -61,45 +61,57 @@ set(KWEBP_SOURCE_FILES
 set(KWEBP_INCLUDE_DIRS ${KANGLE_INCLUDE_DIRS})
 set(KWEBP_LIBS)
 
+find_package(Threads REQUIRED)
 if(WIN32)
-    list(APPEND KWEBP_LIBS windowscodecs)
+    find_package(WebP REQUIRED)
+    message(STATUS "libwebp version ${WEBP_VERSION}")
+    list(APPEND KWEBP_INCLUDE_DIRS ${WEBP_INCLUDE_DIRS})
+    list(APPEND KWEBP_LIBS windowscodecs WebP::webp)
     list(APPEND KWEBP_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/win_encode.c")
 else()
     if(NOT LIBWEBP_DIR
-       OR NOT EXISTS "${LIBWEBP_DIR}/src/mux/animi.h"
+       OR NOT EXISTS "${LIBWEBP_DIR}/CMakeLists.txt"
        OR NOT EXISTS "${LIBWEBP_DIR}/imageio/image_dec.h")
-        message(FATAL_ERROR
-            "LIBWEBP_DIR must point to the libwebp source tree used to build libwebp")
+        message(FATAL_ERROR "LIBWEBP_DIR must point to the libwebp source tree")
     endif()
-    if(NOT IS_DIRECTORY "${LIBWEBP_DIR}/build")
-        message(FATAL_ERROR
-            "Cannot find ${LIBWEBP_DIR}/build. Build libwebp with CMake first.")
-    endif()
+
+    find_package(JPEG REQUIRED)
+    find_package(PNG REQUIRED)
+    find_package(TIFF REQUIRED)
+    find_package(GIF)
+
+    set(BUILD_SHARED_LIBS OFF)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+    # Keep the image decoder enabled and let it use shared image libraries.
+    # libwebp disables TIFF when WEBP_LINK_STATIC is enabled.
+    set(WEBP_LINK_STATIC OFF CACHE INTERNAL "Allow shared image libraries")
+    set(WEBP_BUILD_CWEBP ON CACHE INTERNAL "Enable libwebp's image decoder target")
+    set(WEBP_BUILD_LIBWEBPMUX ON CACHE INTERNAL "Enable libwebp's animation muxer")
+    # Exclude libwebp's own tools and install rules from the module build.
+    add_subdirectory("${LIBWEBP_DIR}" libwebp EXCLUDE_FROM_ALL)
 
     list(APPEND KWEBP_SOURCE_FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/gifdec.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/gif2webp.c")
     list(APPEND KWEBP_INCLUDE_DIRS "${LIBWEBP_DIR}")
-    list(APPEND KWEBP_LIBS imagedec jpeg png tiff webpdemux imageioutil)
-    link_directories("${LIBWEBP_DIR}/build")
+    list(APPEND KWEBP_LIBS imagedec webp)
 
-    find_package(GIF)
     if(GIF_FOUND)
         add_compile_definitions(WEBP_HAVE_GIF)
         list(APPEND KWEBP_INCLUDE_DIRS ${GIF_INCLUDE_DIR})
-        list(APPEND KWEBP_LIBS ${GIF_LIBRARIES} webpmux)
+        list(APPEND KWEBP_LIBS ${GIF_LIBRARIES} libwebpmux)
     endif()
 endif()
 
-find_package(Threads REQUIRED)
-find_package(WebP REQUIRED)
-message(STATUS "libwebp version ${WEBP_VERSION}")
-list(APPEND KWEBP_LIBS WebP::webp)
-
 add_library(kwebp MODULE ${KWEBP_SOURCE_FILES})
 set_target_properties(kwebp PROPERTIES PREFIX "" C_STANDARD 99 C_STANDARD_REQUIRED ON)
-target_include_directories(kwebp PRIVATE ${KWEBP_INCLUDE_DIRS} ${WEBP_INCLUDE_DIRS})
+target_include_directories(kwebp PRIVATE ${KWEBP_INCLUDE_DIRS})
 target_link_libraries(kwebp PRIVATE ${KWEBP_LIBS})
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # Keep the private codec symbols local even if Kangle has loaded system libwebp.
+    set_property(TARGET kwebp APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--exclude-libs,ALL")
+endif()
 
 set(CMAKE_INSTALL_PREFIX "${KANGLE_DIR}" CACHE PATH "Install path prefix" FORCE)
 install(TARGETS kwebp
