@@ -63,10 +63,32 @@ set(KWEBP_LIBS)
 
 find_package(Threads REQUIRED)
 if(WIN32)
-    find_package(WebP REQUIRED)
-    message(STATUS "libwebp version ${WEBP_VERSION}")
-    list(APPEND KWEBP_INCLUDE_DIRS ${WEBP_INCLUDE_DIRS})
-    list(APPEND KWEBP_LIBS windowscodecs WebP::webp)
+    set(KWEBP_WINDOWS_SDK "" CACHE PATH "Path to the Windows x64 dependency SDK")
+    list(APPEND KWEBP_LIBS windowscodecs)
+    if(KWEBP_WINDOWS_SDK
+       AND EXISTS "${KWEBP_WINDOWS_SDK}/include/webp/encode.h"
+       AND EXISTS "${KWEBP_WINDOWS_SDK}/lib/libwebp.lib"
+       AND EXISTS "${KWEBP_WINDOWS_SDK}/lib/libsharpyuv.lib")
+        # The SDK copies only Release libraries. Its vcpkg exports can still
+        # reference Debug archives and fail validation when imported.
+        list(APPEND KWEBP_INCLUDE_DIRS "${KWEBP_WINDOWS_SDK}/include")
+        list(APPEND KWEBP_LIBS
+            "${KWEBP_WINDOWS_SDK}/lib/libwebp.lib"
+            "${KWEBP_WINDOWS_SDK}/lib/libsharpyuv.lib"
+            shlwapi ole32)
+    else()
+        if(KWEBP_WINDOWS_SDK)
+            set(WebP_DIR "${KWEBP_WINDOWS_SDK}/share/WebP")
+            if(NOT EXISTS "${WebP_DIR}/WebPConfig.cmake")
+                message(FATAL_ERROR
+                    "Cannot find the Release libwebp libraries or WebPConfig.cmake in ${KWEBP_WINDOWS_SDK}")
+            endif()
+        endif()
+        find_package(WebP REQUIRED)
+        message(STATUS "libwebp version ${WEBP_VERSION}")
+        list(APPEND KWEBP_INCLUDE_DIRS ${WEBP_INCLUDE_DIRS})
+        list(APPEND KWEBP_LIBS WebP::webp)
+    endif()
     list(APPEND KWEBP_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/win_encode.c")
 else()
     if(NOT LIBWEBP_DIR

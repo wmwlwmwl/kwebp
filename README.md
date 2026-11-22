@@ -20,7 +20,7 @@
 
 先运行相邻 Kangle 项目的 `build-windows.ps1` 生成开发头文件。在 kwebp 工程目录运行 `.\build-windows.ps1`，默认生成 `build/Release/kwebp.dll`。
 
-脚本默认使用 Kangle 源码中 `deps/windows-x64` 的 libwebp 和 Kangle 的 `build/install`。可通过 `-BuildDirectory`、`-DependencyRoot` 或 `-KangleDirectory` 指定对应目录。
+脚本默认链接 Kangle 源码中 `deps/windows-x64/lib` 的 Release 版 `libwebp.lib` 和 `libsharpyuv.lib`，并使用 Kangle 的 `build/install`。可通过 `-BuildDirectory`、`-DependencyRoot` 或 `-KangleDirectory` 指定对应目录。
 
 ## Linux 编译和安装 kwebp
 

@@ -15,10 +15,6 @@ if (!(Test-Path -LiteralPath (Join-Path $KangleDirectory 'include/ksapi.h') -Pat
 }
 $KangleDirectory = (Resolve-Path -LiteralPath $KangleDirectory).Path
 $DependencyRoot = (Resolve-Path -LiteralPath $DependencyRoot).Path
-$webpConfig = Join-Path $DependencyRoot 'share/WebP'
-if (!(Test-Path -LiteralPath (Join-Path $webpConfig 'WebPConfig.cmake') -PathType Leaf)) {
-    throw "Missing libwebp in Windows x64 SDK: $DependencyRoot"
-}
 
 $command = Get-Command cmake.exe -ErrorAction SilentlyContinue
 if ($command) {
@@ -32,7 +28,7 @@ if (!(Test-Path -LiteralPath $cmake -PathType Leaf)) {
 
 $configure = @(
     '-S', $PSScriptRoot, '-B', $BuildDirectory, '-G', 'Visual Studio 17 2022', '-A', 'x64',
-    '-DCMAKE_CONFIGURATION_TYPES=Release', '-DCMAKE_C_FLAGS=/utf-8 /MP4', "-DWebP_DIR=$webpConfig",
+    '-DCMAKE_CONFIGURATION_TYPES=Release', '-DCMAKE_C_FLAGS=/utf-8 /MP4', "-DKWEBP_WINDOWS_SDK=$DependencyRoot",
     "-DCMAKE_PREFIX_PATH=$DependencyRoot",
     "-DKANGLE_DIR=$KangleDirectory", "-DKANGLE_SOURCE_DIR=$kangleSource"
 )
